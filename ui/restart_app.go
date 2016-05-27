@@ -83,10 +83,10 @@ func (c *RestartApps) DuringEach(app ApplicationPrinter) {
 	fmt.Print(".")
 }
 
-func (c *RestartApps) AfterAll(attempts, warnings int, errors int) {
-	successes := attempts - warnings - errors
+func (c *RestartApps) AfterAll(attempts, stopped, warnings int, errors int) {
+	successes := attempts - stopped - warnings - errors
 	fmt.Println()
-	fmt.Printf("Restarting completed: %d apps, %d errors, %d warnings\n", successes, errors, warnings)
+	fmt.Printf("Restarting completed: %d apps restarted, %d apps already stopped, %d errors, %d warnings\n", successes, stopped, errors, warnings)
 }
 
 func (c *RestartApps) UserWarning(app ApplicationPrinter) {

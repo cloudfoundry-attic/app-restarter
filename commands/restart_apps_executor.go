@@ -16,6 +16,7 @@ import (
 
 const (
 	Success = iota
+	Stopped
 	Warning
 	Err
 )
@@ -72,8 +73,8 @@ func (exe *RestartAppsExecutor) Execute(cliConnection api.Connection) error {
 		spaceMap[space.Guid] = space
 	}
 
-	warnings, errors := exe.restartApps(cliConnection, apps, spaceMap)
-	exe.RestartAppsUI.AfterAll(len(apps), warnings, errors)
+	stopped, warnings, errors := exe.restartApps(cliConnection, apps, spaceMap)
+	exe.RestartAppsUI.AfterAll(len(apps), stopped, warnings, errors)
 
 	return nil
 }
@@ -85,7 +86,7 @@ func (exe *RestartAppsExecutor) RestartApp(
 	appRestarter AppRestarter,
 ) int {
 	if appPrinter.App.State == models.Stopped {
-		return Success
+		return Stopped
 	}
 
 	exe.RestartAppsUI.BeforeEach(appPrinter)
@@ -127,7 +128,7 @@ func (exe *RestartAppsExecutor) RestartApp(
 	return Success
 }
 
-func (exe *RestartAppsExecutor) restartApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space) (int, int) {
+func (exe *RestartAppsExecutor) restartApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space) (int, int, int) {
 	runningAppsChan := generateAppsChan(apps)
 	outputsChan, waitDone := processAppsChan(cliConnection, spaceMap, exe.RestartApp, runningAppsChan, len(apps))
 
@@ -178,9 +179,10 @@ func processAppsChan(
 	return output, &waitDone
 }
 
-func outputAppsChan(outputsChan chan int) (int, int) {
+func outputAppsChan(outputsChan chan int) (int, int, int) {
 	warnings := 0
 	errors := 0
+	stopped := 0
 
 	for result := range outputsChan {
 		switch result {
@@ -188,8 +190,10 @@ func outputAppsChan(outputsChan chan int) (int, int) {
 			warnings++
 		case Err:
 			errors++
+		case Stopped:
+			stopped++
 		default:
 		}
 	}
-	return warnings, errors
+	return stopped, warnings, errors
 }
