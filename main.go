@@ -8,7 +8,6 @@ import (
 	"github.com/cloudfoundry-incubator/app-restarter/ui"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jessevdk/go-flags"
-
 )
 
 type AppRestarter struct{}
