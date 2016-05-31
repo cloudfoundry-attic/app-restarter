@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+export GH_ORG=${GH_ORG:-cloudfoundry-incubator}
+export GH_REPO=${GH_REPO:-app-restarter}
+export BINARY_PREFIX=${BINARY_PREFIX:-app-restarter}
+export NAME=${NAME:-"App Restarter"}
+export DESCRIPTION=${DESCRIPTION:-"A CF cli plugin for restarting apps"}
+export PKG_DIR=${PKG_DIR:=out}
+
+MAJOR=$(cat main.go | grep Major | cut -d' ' -f2 | tr -d ,)
+MINOR=$(cat main.go | grep Minor | cut -d' ' -f2 | tr -d ,)
+BUILD=$(cat main.go | grep Build | cut -d' ' -f2 | tr -d ,)
+VERSION="${MAJOR}.${MINOR}.${BUILD}"
+
+if [[ "$(which github-release)X" == "X" ]]; then
+  echo "Please install github-release. Read https://github.com/aktau/github-release#readme"
+  exit 1
+fi
+
+
+echo "Creating tagged release v${VERSION} of $GH_ORG/$GH_REPO"
+read -n1 -r -p "Ok to proceed? (Ctrl-C to cancel)..." key
+
+github-release release \
+    --user $GH_ORG --repo $GH_REPO \
+    --tag v${VERSION} \
+    --name "v${VERSION} - ${NAME}" \
+    --description "${DESCRIPTION}"
+
+os_arches=( darwin_amd64 linux_386 linux_amd64 windows_386 windows_amd64 )
+for os_arch in "${os_arches[@]}"; do
+  asset=$(ls ${PKG_DIR}/${BINARY_PREFIX}_${os_arch}* | head -n 1)
+  filename="${asset##*/}"
+
+  echo "Uploading $filename..."
+  github-release upload \
+    --user $GH_ORG --repo $GH_REPO \
+    --tag v${VERSION} \
+    --name $filename \
+    --file ${asset}
+done
+
+echo "Release complete: https://github.com/$GH_ORG/$GH_REPO/releases/tag/v$VERSION"
