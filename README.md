@@ -3,6 +3,11 @@ app-restarter
 
 A CF cli plugin for restarting apps.
 
+## Install
+
+1. Visit the [Releases Page](https://github.com/cloudfoundry-incubator/app-restarter/releases) and copy a link to the plugin for your workstation's architecture.
+2. Run `cf install-plugin <link-to-release-copied-above>`
+
 ## Usage
 
 ```bash
